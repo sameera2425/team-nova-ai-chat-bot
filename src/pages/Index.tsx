@@ -114,34 +114,40 @@ const Index = () => {
 
         {/* Chat Interface */}
         <div className="max-w-4xl mx-auto animate-fade-in">
-          {/* Tags */}
-          <div className="flex flex-wrap gap-3 mb-4">
-            {tags.map((tag) => (
-              <button
-                key={tag}
-                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors duration-200 hover-scale"
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+          {/* Input Box with Gradient Border */}
+          <div className="relative">
+            {/* Gradient Border Container */}
+            <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
+              <div className="bg-white rounded-2xl p-6">
+                {/* Tags Inside */}
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag}
+                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
 
-          {/* Input Box */}
-          <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-4">
-              <button className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors duration-200 hover-scale">
-                <Plus className="w-5 h-5" />
-              </button>
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
-                className="flex-1 text-lg placeholder-gray-400 focus:outline-none"
-              />
-              <button className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 hover-scale shadow-lg">
-                <Send className="w-5 h-5" />
-              </button>
+                {/* Input Row */}
+                <div className="flex items-center gap-4">
+                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                    <Plus className="w-5 h-5" />
+                  </button>
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
+                    className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
+                  />
+                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
