@@ -25,26 +25,22 @@ const Index = () => {
     {
       title: "AI-Videos",
       icon: Video,
-      description: "Unique generated educational videos tailored to learning needs every time.",
-      gradient: "from-blue-500 to-purple-600"
+      description: "Unique generated educational videos tailored to learning needs every time."
     },
     {
       title: "Mindmaps",
       icon: Map,
-      description: "Visual learning maps that simplify complex topics. Visual learning.",
-      gradient: "from-green-500 to-teal-600"
+      description: "Visual learning maps that simplify complex topics. Visual learning."
     },
     {
       title: "Smart Time-Table",
       icon: Calendar,
-      description: "Unique generated educational videos tailored to your learning.",
-      gradient: "from-orange-500 to-red-600"
+      description: "Unique generated educational videos tailored to your learning."
     },
     {
       title: "Instant Quizzes",
       icon: Clipboard,
-      description: "Unique videos tailored to your learning needs every time.",
-      gradient: "from-pink-500 to-rose-600"
+      description: "Unique videos tailored to your learning needs every time."
     }
   ];
 
@@ -110,7 +106,7 @@ const Index = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {features.map((feature, index) => (
             <FeatureCard key={feature.title} feature={feature} index={index} />
           ))}
@@ -169,13 +165,13 @@ const NavItem = ({ icon: Icon, text, active = false }) => (
 
 const FeatureCard = ({ feature, index }) => (
   <div
-    className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover-scale animate-fade-in border border-gray-100 group cursor-pointer"
+    className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in"
     style={{ animationDelay: `${index * 0.1}s` }}
   >
-    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-      <feature.icon className="w-6 h-6 text-white" />
+    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+      <feature.icon className="w-5 h-5 text-gray-600" />
     </div>
-    <h3 className="text-xl font-semibold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors">
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">
       {feature.title}
     </h3>
     <p className="text-gray-600 text-sm leading-relaxed">
