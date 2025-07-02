@@ -51,9 +51,16 @@ const Index = () => {
       {/* Sidebar */}
       <div className="w-80 bg-blue-50 border-r border-blue-100 p-6 flex flex-col">
         {/* Logo */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-blue-900 mb-1">Teslearn</h1>
-          <p className="text-sm text-blue-600 font-medium">Learn Your Way.</p>
+        <div className="mb-8 flex items-center gap-3">
+          <img 
+            src="/lovable-uploads/c5d5e601-2da5-47ee-8dfa-80eb7846f070.png" 
+            alt="Teslearn Logo" 
+            className="w-10 h-10 rounded-lg"
+          />
+          <div>
+            <h1 className="text-2xl font-bold text-blue-900 mb-1">Teslearn</h1>
+            <p className="text-sm text-blue-600 font-medium">Learn Your Way.</p>
+          </div>
         </div>
 
         {/* Search Bar */}
