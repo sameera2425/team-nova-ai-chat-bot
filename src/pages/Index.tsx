@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus } from 'lucide-react';
 
@@ -92,12 +91,11 @@ const Index = () => {
           {/* AI Assistant Visual */}
           <div className="flex justify-center mb-8">
             <div className="relative animate-scale-in">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
-                </div>
-              </div>
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded-full blur-xl opacity-30 animate-pulse"></div>
+              <img 
+                src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
+                alt="AI Assistant Sphere" 
+                className="w-24 h-24 object-contain"
+              />
             </div>
           </div>
 
