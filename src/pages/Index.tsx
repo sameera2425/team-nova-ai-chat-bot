@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus } from 'lucide-react';
 
@@ -47,8 +48,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-80 bg-blue-50 border-r border-blue-100 p-6 flex flex-col">
+      {/* Sidebar - Reduced width */}
+      <div className="w-64 bg-blue-50 border-r border-blue-100 p-6 flex flex-col">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3">
           <img 
@@ -81,63 +82,51 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 overflow-auto">
+      <div className="flex-1 p-6 overflow-auto">
         {/* Greeting */}
-        <div className="mb-8">
-          <p className="text-lg text-gray-600 mb-6 animate-fade-in">
+        <div className="mb-6">
+          <p className="text-lg text-gray-600 mb-4 animate-fade-in">
             {getGreeting()}, Teen!
           </p>
 
           {/* AI Assistant Visual */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <div className="relative animate-scale-in">
               <img 
                 src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
                 alt="AI Assistant Sphere" 
-                className="w-24 h-24 object-contain"
+                className="w-20 h-20 object-contain"
               />
             </div>
           </div>
 
           {/* Main Heading */}
-          <div className="text-center mb-12 animate-fade-in">
-            <h2 className="text-3xl font-semibold text-blue-900 mb-2">
+          <div className="text-center mb-8 animate-fade-in">
+            <h2 className="text-2xl font-semibold text-blue-900 mb-2">
               Hey there! I'm Tesla.
             </h2>
-            <h3 className="text-4xl font-bold text-gray-800">
+            <h3 className="text-3xl font-bold text-gray-800">
               What do you want to learn today?
             </h3>
           </div>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        {/* Feature Cards - Made smaller */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           {features.map((feature, index) => (
             <FeatureCard key={feature.title} feature={feature} index={index} />
           ))}
         </div>
 
-        {/* Chat Interface */}
+        {/* Chat Interface - Restructured */}
         <div className="max-w-4xl mx-auto animate-fade-in">
           {/* Input Box with Gradient Border */}
           <div className="relative">
             {/* Gradient Border Container */}
             <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
-              <div className="bg-white rounded-2xl p-6">
-                {/* Tags Inside */}
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {tags.map((tag) => (
-                    <button
-                      key={tag}
-                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Input Row */}
-                <div className="flex items-center gap-4">
+              <div className="bg-white rounded-2xl p-5">
+                {/* Main Input Text */}
+                <div className="flex items-center gap-4 mb-4">
                   <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
                     <Plus className="w-5 h-5" />
                   </button>
@@ -151,6 +140,18 @@ const Index = () => {
                   <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
                     <Send className="w-5 h-5" />
                   </button>
+                </div>
+
+                {/* Tags Below Input */}
+                <div className="flex flex-wrap gap-3">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag}
+                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                    >
+                      {tag}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -176,16 +177,16 @@ const NavItem = ({ icon: Icon, text, active = false }) => (
 
 const FeatureCard = ({ feature, index }) => (
   <div
-    className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in"
+    className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in"
     style={{ animationDelay: `${index * 0.1}s` }}
   >
-    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
-      <feature.icon className="w-5 h-5 text-gray-600" />
+    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-3">
+      <feature.icon className="w-4 h-4 text-gray-600" />
     </div>
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+    <h3 className="text-base font-semibold text-gray-900 mb-2">
       {feature.title}
     </h3>
-    <p className="text-gray-600 text-sm leading-relaxed">
+    <p className="text-gray-600 text-xs leading-relaxed">
       {feature.description}
     </p>
   </div>
