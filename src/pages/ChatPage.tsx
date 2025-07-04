@@ -64,8 +64,8 @@ const ChatPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar - Same as Index */}
-      <div className="w-64 bg-blue-50 border-r border-blue-100 p-6 flex flex-col">
+      {/* Sidebar - Fixed */}
+      <div className="w-64 bg-blue-50 border-r border-blue-100 p-6 flex flex-col fixed inset-y-0 left-0 z-30 h-full">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3">
           <img 
@@ -95,77 +95,101 @@ const ChatPage = () => {
         </nav>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 overflow-auto flex flex-col">
-        {/* Greeting/Header - Same as Index */}
-        <div className="mb-6">
-          <p className="text-lg text-gray-600 mb-4 animate-fade-in">
+      {/* Main Content - with left margin for sidebar */}
+      <div className="flex-1 flex flex-col" style={{ marginLeft: '16rem' }}>
+        {/* Header - Fixed */}
+        <div className="bg-white w-full z-20 sticky top-0 left-0 border-b border-blue-100 px-6 py-4">
+          <p className="text-lg text-gray-600 animate-fade-in">
             {getGreeting()}, Teen!
           </p>
         </div>
         {/* Chat Thread */}
-        <div className="flex-1 flex flex-col max-w-2xl mx-auto gap-6">
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto gap-10 pb-40 pt-6 w-full">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              {msg.sender === 'ai' && (
-                <div className="flex items-end gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-blue-600" />
+            msg.sender === 'ai' ? (
+              <div key={msg.id} className="flex items-start gap-4">
+                <img
+                  src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png"
+                  alt="Tesla AI Sphere"
+                  className="w-14 h-14 rounded-full object-contain mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-lg text-gray-800">Tesla</span>
+                    {msg.video && (
+                      <span className="px-2 py-0.5 bg-gray-100 text-xs text-gray-500 rounded-md font-medium ml-2">AI-Video</span>
+                    )}
                   </div>
+                  <div className="text-base text-gray-800 mb-3 whitespace-pre-line">
+                    {msg.text}
+                  </div>
+                  {msg.video && (
+                    <>
+                      <div className="italic text-gray-400 mb-2">Preparing Video...</div>
+                      <div className="rounded-xl overflow-hidden w-[320px] h-[180px] bg-black flex items-center justify-center">
+                        <button className="flex items-center justify-center w-full h-full" aria-label="Play video">
+                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="24" fill="white" fillOpacity="0.2"/>
+                            <path d="M20 17L32 24L20 31V17Z" fill="white"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
-              <div className={`max-w-[75%] rounded-2xl px-5 py-3 shadow-md ${msg.sender === 'user' ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white text-gray-900 rounded-bl-sm'} flex flex-col gap-2`}>
-                <span>{msg.text}</span>
-                {msg.video && (
-                  <div className="relative mt-2 group">
-                    <img src={msg.videoThumb} alt="Video preview" className="w-48 h-28 object-cover rounded-xl" />
-                    <button className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Play video">
-                      <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
-                    </button>
-                  </div>
-                )}
               </div>
-              {msg.sender === 'user' && (
-                <div className="flex items-end gap-2 ml-2">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
+            ) : (
+              <div key={msg.id} className="flex items-start gap-4 justify-end">
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-lg text-gray-800">You</span>
+                  </div>
+                  <div className="bg-blue-600 text-white rounded-2xl px-6 py-3 shadow-md text-base max-w-xl text-right">
+                    {msg.text}
                   </div>
                 </div>
-              )}
-            </div>
+                <img
+                  src="https://api.dicebear.com/7.x/thumbs/svg?seed=teen"
+                  alt="User Avatar"
+                  className="w-12 h-12 rounded-full object-cover mt-1"
+                />
+              </div>
+            )
           ))}
           <div ref={chatEndRef} />
         </div>
-        {/* Input Area - Styled like Index */}
-        <div className="max-w-4xl mx-auto animate-fade-in mt-8 w-full">
-          <div className="relative">
-            <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
-              <div className="bg-white rounded-2xl p-5">
-                <div className="flex items-center gap-4 mb-4">
-                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
-                    <Plus className="w-5 h-5" />
-                  </button>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSend()}
-                    placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
-                    className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
-                  />
-                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={handleSend} aria-label="Send">
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {tags.map((tag) => (
-                    <button
-                      key={tag}
-                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
-                    >
-                      {tag}
+        {/* Prompt Box - Fixed at bottom */}
+        <div className="fixed left-64 right-0 bottom-0 z-10 bg-transparent">
+          <div className="max-w-4xl mx-auto animate-fade-in w-full pb-6">
+            <div className="relative">
+              <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
+                <div className="bg-white rounded-2xl p-5">
+                  <div className="flex items-center gap-4 mb-4">
+                    <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
+                      <Plus className="w-5 h-5" />
                     </button>
-                  ))}
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSend()}
+                      placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
+                      className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
+                    />
+                    <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={handleSend} aria-label="Send">
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {tags.map((tag) => (
+                      <button
+                        key={tag}
+                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
