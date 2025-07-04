@@ -95,7 +95,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
                 alt="AI Assistant Sphere" 
-                className="w-32 h-32 object-contain"
+                className="w-40 h-40 object-contain"
               />
             </div>
           </div>
@@ -180,16 +180,16 @@ const NavItem = ({ icon: Icon, text, active = false }) => (
 
 const FeatureCard = ({ feature, index }) => (
   <div
-    className="bg-white rounded-lg p-3 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in h-fit"
+    className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in h-32 flex flex-col"
     style={{ animationDelay: `${index * 0.1}s` }}
   >
-    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center mb-2">
-      <feature.icon className="w-4 h-4 text-gray-600" />
+    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-3">
+      <feature.icon className="w-5 h-5 text-gray-600" />
     </div>
-    <h3 className="text-sm font-semibold text-gray-900 mb-1">
+    <h3 className="text-sm font-semibold text-gray-900 mb-2">
       {feature.title}
     </h3>
-    <p className="text-gray-600 text-xs leading-relaxed">
+    <p className="text-gray-600 text-xs leading-relaxed flex-1">
       {feature.description}
     </p>
   </div>
