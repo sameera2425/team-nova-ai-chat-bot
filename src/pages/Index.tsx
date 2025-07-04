@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [inputValue, setInputValue] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -126,7 +128,7 @@ const Index = () => {
               <div className="bg-white rounded-2xl p-5">
                 {/* Main Input Text */}
                 <div className="flex items-center gap-4 mb-4">
-                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
                     <Plus className="w-5 h-5" />
                   </button>
                   <input
@@ -136,7 +138,7 @@ const Index = () => {
                     placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
                     className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
                   />
-                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={() => navigate('/chat')} aria-label="Send">
                     <Send className="w-5 h-5" />
                   </button>
                 </div>
