@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus } from 'lucide-react';
 
@@ -95,7 +94,7 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
                 alt="AI Assistant Sphere" 
-                className="w-20 h-20 object-contain"
+                className="w-32 h-32 object-contain"
               />
             </div>
           </div>
