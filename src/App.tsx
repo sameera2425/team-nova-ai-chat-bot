@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
+import SetGoalPage from "./pages/SetGoalPage";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,11 @@ const AnimatedRoutes = () => {
         <Route path="/chat" element={
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
             <ChatPage />
+          </motion.div>
+        } />
+        <Route path="/set-goal" element={
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+            <SetGoalPage />
           </motion.div>
         } />
         <Route path="*" element={<NotFound />} />
