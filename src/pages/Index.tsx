@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus } from 'lucide-react';
+import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
@@ -22,6 +22,13 @@ const Index = () => {
     if (hour < 22) return "Good evening";
     return "Happy late night";
   };
+
+  const navItems = [
+    { icon: Home, text: 'Default Project', path: '/' },
+    { icon: FileText, text: 'My Content', path: '/' },
+    { icon: PenTool, text: 'Writing Style', path: '/' },
+    { icon: Target, text: 'Set a Goal', path: '/set-goal' },
+  ];
 
   const features = [
     {
@@ -77,17 +84,22 @@ const Index = () => {
 
         {/* Navigation */}
         <nav className="space-y-2">
-          <NavItem icon={Home} text="Default Project" active />
-          <NavItem icon={FileText} text="My Content" />
-          <NavItem icon={PenTool} text="Writing Style" />
+          {navItems.map((item, i) => (
+            <NavItem
+              key={item.text}
+              icon={item.icon}
+              text={item.text}
+              onClick={() => item.path && navigate(item.path)}
+            />
+          ))}
         </nav>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 overflow-auto">
         {/* Greeting */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-lg text-gray-600 mb-4 animate-fade-in">
+        <div className="bg-white w-full z-20 sticky top-0 left-0 border-b border-blue-100 px-6 py-2 flex items-center justify-between">
+          <p className="text-lg text-gray-600 animate-fade-in">
             {getGreeting()}, Teen!
           </p>
           <button onClick={() => navigate('/profile')} className="ml-4 flex items-center gap-2 bg-white border border-blue-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition-all duration-200">
@@ -95,36 +107,33 @@ const Index = () => {
           </button>
         </div>
 
-        {/* AI Assistant Visual */}
-        <div className="flex justify-center mb-6">
-          <div className="relative animate-scale-in">
+        <div className="flex flex-col items-center w-full">
+          <div className="relative animate-scale-in mb-6 pt-6">
             <img 
               src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
               alt="AI Assistant Sphere" 
               className="w-32 h-32 object-contain"
             />
           </div>
-        </div>
-
-        {/* Main Heading */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h2 className="text-2xl font-semibold text-blue-900 mb-2">
-            Hey there! I'm Tesla.
-          </h2>
-          <h3 className="text-3xl font-bold text-gray-800">
-            What do you want to learn today?
-          </h3>
-        </div>
-
-        {/* Feature Cards - Made smaller */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          {features.map((feature, index) => (
-            <FeatureCard key={feature.title} feature={feature} index={index} />
-          ))}
+          {/* Main Heading */}
+          <div className="text-center mb-8 animate-fade-in">
+            <h2 className="text-2xl font-semibold text-blue-900 mb-2">
+              Hey there! I'm Tesla.
+            </h2>
+            <h3 className="text-3xl font-bold text-gray-800">
+              What do you want to learn today?
+            </h3>
+          </div>
+          {/* Feature Cards - Made smaller */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8 w-full max-w-6xl">
+            {features.map((feature, index) => (
+              <FeatureCard key={feature.title} feature={feature} index={index} />
+            ))}
+          </div>
         </div>
 
         {/* Chat Interface - Restructured */}
-        <div className="max-w-4xl mx-auto animate-fade-in">
+        <div className="max-w-4xl mx-auto animate-fade-in px-6">
           {/* Input Box with Gradient Border */}
           <div className="relative">
             {/* Gradient Border Container */}
@@ -167,13 +176,12 @@ const Index = () => {
   );
 };
 
-const NavItem = ({ icon: Icon, text, active = false }) => (
+const NavItem = ({ icon: Icon, text, onClick }) => (
   <button
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale ${
-      active
-        ? 'bg-blue-200 text-blue-900 font-medium'
-        : 'text-blue-700 hover:bg-blue-100'
-    }`}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale text-blue-700 hover:bg-blue-100`}
+    onClick={onClick}
+    aria-label={text}
+    type="button"
   >
     <Icon className="w-5 h-5" />
     <span>{text}</span>

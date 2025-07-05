@@ -1,11 +1,12 @@
 import React from 'react';
-import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight } from 'lucide-react';
+import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
-  { icon: Home, text: 'Default Project', active: false },
-  { icon: FileText, text: 'My Content' },
-  { icon: PenTool, text: 'Writing Style' },
+  { icon: Home, text: 'Default Project', path: '/' },
+  { icon: FileText, text: 'My Content', path: '/' },
+  { icon: PenTool, text: 'Writing Style', path: '/' },
+  { icon: Target, text: 'Set a Goal', path: '/set-goal' },
 ];
 
 const dummyUser = {
@@ -53,8 +54,8 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-blue-50 border-r border-blue-100 p-6 flex flex-col">
+      {/* Sidebar - Fixed */}
+      <div className="w-64 bg-blue-50 border-r border-blue-100 p-6 flex flex-col fixed inset-y-0 left-0 z-30 h-full">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3">
           <img 
@@ -79,29 +80,33 @@ const ProfilePage = () => {
         {/* Navigation */}
         <nav className="space-y-2">
           {navItems.map((item, i) => (
-            <NavItem key={item.text} icon={item.icon} text={item.text} active={item.active} />
+            <NavItem
+              key={item.text}
+              icon={item.icon}
+              text={item.text}
+              onClick={() => item.path && navigate(item.path)}
+            />
           ))}
         </nav>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 overflow-auto">
+      {/* Main Content - with left margin for sidebar */}
+      <div className="flex-1 overflow-auto" style={{ marginLeft: '16rem' }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="bg-white w-full z-20 sticky top-0 left-0 border-b border-blue-100 px-6 py-2 flex items-center justify-between mb-8">
           <p className="text-lg text-gray-600 animate-fade-in">
             Profile
           </p>
           <button
-            className="flex items-center gap-2 bg-white border border-blue-100 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200"
+            className="ml-4 flex items-center gap-2 bg-white border border-blue-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition-all duration-200"
             onClick={() => navigate('/profile')}
           >
             <img src={dummyUser.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
-            <span className="font-semibold text-blue-900">{dummyUser.name}</span>
           </button>
         </div>
 
         {/* User Info */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
           <div className="flex flex-col items-center bg-white rounded-2xl shadow p-8 w-full md:w-1/3 hover:shadow-lg transition-all duration-200">
             <img src={dummyUser.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover mb-4" />
             <div className="text-xl font-bold text-blue-900 mb-1">{dummyUser.name}</div>
@@ -116,7 +121,7 @@ const ProfilePage = () => {
           <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="text-lg font-semibold text-blue-900">Learning Goals</div>
-              <button className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+              <button className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1" onClick={() => navigate('/set-goal')}>
                 <Edit className="w-4 h-4" /> Edit Goals
               </button>
             </div>
@@ -135,7 +140,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Performance Summary */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
           <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col items-center">
             <div className="text-lg font-semibold text-blue-900 mb-4">Performance Overview</div>
             {/* Donut Chart Dummy */}
@@ -186,7 +191,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Learning Streak & Badges */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
           <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col items-center">
             <div className="text-lg font-semibold text-blue-900 mb-4">Learning Streak & Badges</div>
             <div className="flex items-center gap-6 mb-4">
@@ -223,7 +228,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Settings & Account */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
           <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col">
             <div className="text-lg font-semibold text-blue-900 mb-4">Settings & Account</div>
             <div className="flex flex-col gap-4 mb-4">
@@ -246,14 +251,12 @@ const ProfilePage = () => {
   );
 };
 
-const NavItem = ({ icon: Icon, text, active = false }) => (
+const NavItem = ({ icon: Icon, text, onClick }) => (
   <button
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale ${
-      active
-        ? 'bg-blue-200 text-blue-900 font-medium'
-        : 'text-blue-700 hover:bg-blue-100'
-    }`}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale text-blue-700 hover:bg-blue-100`}
+    onClick={onClick}
     aria-label={text}
+    type="button"
   >
     <Icon className="w-5 h-5" />
     <span>{text}</span>
