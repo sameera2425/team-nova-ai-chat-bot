@@ -38,6 +38,9 @@ const ChatPage = () => {
   const [flowchartFullscreen, setFlowchartFullscreen] = useState(false);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
+  const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
+  const [fadeStates, setFadeStates] = useState({});
+  const messageRefs = useRef({});
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -48,6 +51,29 @@ const ChatPage = () => {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Fade-out effect for messages near the prompt box
+  useEffect(() => {
+    const observer = new window.IntersectionObserver(
+      (entries) => {
+        const newFadeStates = { ...fadeStates };
+        entries.forEach((entry) => {
+          newFadeStates[entry.target.dataset.id] = entry.intersectionRatio < 1;
+        });
+        setFadeStates(newFadeStates);
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px -120px 0px', // Adjust for fade area height
+        threshold: [0, 1],
+      }
+    );
+    Object.values(messageRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+    return () => observer.disconnect();
+    // eslint-disable-next-line
   }, [messages]);
 
   const getGreeting = () => {
@@ -128,17 +154,25 @@ const ChatPage = () => {
         }}
       >
         {/* Header - Fixed */}
-        <div className="bg-white w-full z-20 sticky top-0 left-0 border-b border-blue-100 px-6 py-4">
+        <div className="bg-white w-full z-20 sticky top-0 left-0 border-b border-blue-100 px-6 py-2 flex items-center justify-between">
           <p className="text-lg text-gray-600 animate-fade-in">
             {getGreeting()}, Teen!
           </p>
+          <button onClick={() => navigate('/profile')} className="ml-4 flex items-center gap-2 bg-white border border-blue-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition-all duration-200">
+            <img src={profileAvatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
+          </button>
         </div>
         {/* Chat Thread */}
         {!flowchartFullscreen && (
-          <div className="flex-1 flex flex-col w-full gap-10 pb-40 pt-6 px-8">
+          <div className="flex-1 flex flex-col w-full gap-10 pb-40 pt-6 px-8 relative">
             {messages.map((msg) => (
               msg.sender === 'ai' ? (
-                <div key={msg.id} className="flex items-start gap-4">
+                <div
+                  key={msg.id}
+                  className={`flex items-start gap-4 transition-opacity duration-500 ${fadeStates[msg.id] ? 'opacity-40' : 'opacity-100'}`}
+                  ref={el => (messageRefs.current[msg.id] = el)}
+                  data-id={msg.id}
+                >
                   <img
                     src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png"
                     alt="Tesla AI Sphere"
@@ -170,7 +204,12 @@ const ChatPage = () => {
                   </div>
                 </div>
               ) : (
-                <div key={msg.id} className="flex items-start gap-4 justify-end">
+                <div
+                  key={msg.id}
+                  className={`flex items-start gap-4 justify-end transition-opacity duration-500 ${fadeStates[msg.id] ? 'opacity-40' : 'opacity-100'}`}
+                  ref={el => (messageRefs.current[msg.id] = el)}
+                  data-id={msg.id}
+                >
                   <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-lg text-gray-800">You</span>
@@ -188,11 +227,13 @@ const ChatPage = () => {
               )
             ))}
             <div ref={chatEndRef} />
+            {/* Fade-out gradient at the bottom of chat area */}
+            <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-40 z-30" style={{background: 'linear-gradient(to top, rgba(249,250,251,0.98) 60%, transparent 100%)'}} />
           </div>
         )}
         {/* Prompt Box - Fixed at bottom */}
         <div
-          className="fixed z-10 bg-transparent transition-all duration-300"
+          className="fixed z-40 bg-gray-50 transition-all duration-300"
           style={{
             left: showFlowchart ? '5rem' : '16rem',
             right: showFlowchart && !flowchartFullscreen ? '420px' : '0',
