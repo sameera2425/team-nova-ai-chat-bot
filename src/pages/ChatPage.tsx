@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot } from 'lucide-react';
+import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
-  { icon: Home, text: 'Default Project', active: true },
-  { icon: FileText, text: 'My Content' },
-  { icon: PenTool, text: 'Writing Style' },
+  { icon: Home, text: 'Default Project', path: '/' },
+  { icon: FileText, text: 'My Content', path: '/' },
+  { icon: PenTool, text: 'Writing Style', path: '/' },
+  { icon: Target, text: 'Set a Goal', path: '/set-goal' },
 ];
 
 const messagesDummy = [
@@ -140,7 +141,14 @@ const ChatPage = () => {
         {/* Navigation */}
         <nav className="space-y-2 flex flex-col items-center">
           {navItems.map((item, i) => (
-            <NavItem key={item.text} icon={item.icon} text={item.text} active={item.active} mini={!sidebarContentVisible} />
+            <NavItem
+              key={item.text}
+              icon={item.icon}
+              text={item.text}
+              mini={!sidebarContentVisible}
+              onClick={() => item.path && navigate(item.path)}
+              active={item.path === '/set-goal' && window.location.pathname === '/set-goal'}
+            />
           ))}
         </nav>
       </div>
@@ -337,14 +345,16 @@ End
   );
 };
 
-const NavItem = ({ icon: Icon, text, active = false, mini = false }) => (
+const NavItem = ({ icon: Icon, text, active = false, mini = false, onClick }) => (
   <button
     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale ${
       active
         ? 'bg-blue-200 text-blue-900 font-medium'
         : 'text-blue-700 hover:bg-blue-100'
-    } ${mini ? 'justify-center px-0' : ''}`}
+    }`}
     aria-label={text}
+    onClick={onClick}
+    type="button"
   >
     <Icon className="w-5 h-5" />
     {!mini && <span>{text}</span>}
