@@ -13,33 +13,17 @@ import SetGoalPage from "./pages/SetGoalPage";
 const queryClient = new QueryClient();
 
 const AnimatedRoutes = () => {
-  const location = useLocation();
+  // const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-            <Index />
-          </motion.div>
-        } />
-        <Route path="/chat" element={
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-            <ChatPage />
-          </motion.div>
-        } />
-        <Route path="/profile" element={
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-            <ProfilePage />
-          </motion.div>
-        } />
-        <Route path="/set-goal" element={
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-            <SetGoalPage />
-          </motion.div>
-        } />
+    // <AnimatePresence mode="wait">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/set-goal" element={<SetGoalPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </AnimatePresence>
+    // </AnimatePresence>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, Target } from 'lucide-react';
+import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, Target, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
@@ -42,6 +42,31 @@ const ChatPage = () => {
   const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
   const [fadeStates, setFadeStates] = useState({});
   const messageRefs = useRef({});
+
+  // Previous chats logic
+  const [previousChats, setPreviousChats] = useState(() => {
+    const stored = localStorage.getItem('previousChats');
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  // Save to localStorage whenever previousChats changes
+  useEffect(() => {
+    localStorage.setItem('previousChats', JSON.stringify(previousChats));
+  }, [previousChats]);
+
+  // Add new chat to previousChats when a new user message is sent
+  useEffect(() => {
+    if (messages.length > 0) {
+      const last = messages[messages.length - 1];
+      if (last.sender === 'user' && last.text.trim()) {
+        // Only add if not already present (by text)
+        if (!previousChats.some(c => c.text === last.text)) {
+          setPreviousChats([{ text: last.text, id: last.id }, ...previousChats].slice(0, 20));
+        }
+      }
+    }
+    // eslint-disable-next-line
+  }, [messages]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -108,6 +133,14 @@ const ChatPage = () => {
   const sidebarWidth = showFlowchart ? 'w-20' : 'w-64';
   const sidebarContentVisible = !showFlowchart;
 
+  const handleOpenChat = (chat) => {
+    // For demo: just set input to chat text (replace with real chat loading logic)
+    setInput(chat.text);
+  };
+  const handleDeleteChat = (id) => {
+    setPreviousChats(previousChats.filter(c => c.id !== id));
+  };
+
   return (
     <div className={`min-h-screen bg-gray-50 flex relative transition-all duration-300 ${flowchartFullscreen ? 'overflow-hidden' : ''}`}> 
       {/* Left Sidebar */}
@@ -129,7 +162,7 @@ const ChatPage = () => {
         </div>
         {/* Search Bar */}
         {sidebarContentVisible && (
-          <div className="relative mb-8">
+          <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
             <input
               type="text"
@@ -138,19 +171,59 @@ const ChatPage = () => {
             />
           </div>
         )}
-        {/* Navigation */}
-        <nav className="space-y-2 flex flex-col items-center">
-          {navItems.map((item, i) => (
-            <NavItem
-              key={item.text}
-              icon={item.icon}
-              text={item.text}
-              mini={!sidebarContentVisible}
-              onClick={() => item.path && navigate(item.path)}
-              active={item.path === '/set-goal' && window.location.pathname === '/set-goal'}
-            />
-          ))}
+        {/* New Chat & Set Goals */}
+        {sidebarContentVisible && (
+          <>
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/')}
+              aria-label="New Chat"
+              type="button"
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span>New Chat</span>
+            </button>
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-4 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/set-goal')}
+              aria-label="Set Goals"
+              type="button"
+            >
+              <Target className="w-5 h-5" />
+              <span>Set Goals</span>
+            </button>
+          </>
+        )}
+        {/* Other Navigation */}
+        <nav className="space-y-2 flex flex-col items-center mb-4">
+          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
+          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
+          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
         </nav>
+        {/* Previous Chats Section */}
+        {sidebarContentVisible && (
+          <div className="mt-2">
+            <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Previous Chats</div>
+            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+              {previousChats.length === 0 && (
+                <div className="text-xs text-gray-400 px-2">No previous chats</div>
+              )}
+              {previousChats.map(chat => (
+                <div key={chat.id} className="flex items-center group px-2 py-1 rounded hover:bg-blue-100 cursor-pointer">
+                  <span className="flex-1 truncate text-sm text-blue-900" onClick={() => handleOpenChat(chat)}>{chat.text}</span>
+                  <button
+                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDeleteChat(chat.id)}
+                    aria-label="Delete chat"
+                    type="button"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content - with left margin for sidebar and right margin for flowchart */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight, Target } from 'lucide-react';
+import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight, Target, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
@@ -52,6 +52,22 @@ const recommendations = [
 const ProfilePage = () => {
   const navigate = useNavigate();
 
+  // Previous chats logic
+  const [previousChats, setPreviousChats] = React.useState(() => {
+    const stored = localStorage.getItem('previousChats');
+    return stored ? JSON.parse(stored) : [];
+  });
+  React.useEffect(() => {
+    localStorage.setItem('previousChats', JSON.stringify(previousChats));
+  }, [previousChats]);
+  const handleOpenChat = (chat) => {
+    // For demo: navigate to chat page and set input (if needed)
+    navigate('/chat');
+  };
+  const handleDeleteChat = (id) => {
+    setPreviousChats(previousChats.filter(c => c.id !== id));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar - Fixed */}
@@ -69,7 +85,7 @@ const ProfilePage = () => {
           </div>
         </div>
         {/* Search Bar */}
-        <div className="relative mb-8">
+        <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
           <input
             type="text"
@@ -77,17 +93,53 @@ const ProfilePage = () => {
             className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200"
           />
         </div>
-        {/* Navigation */}
-        <nav className="space-y-2">
-          {navItems.map((item, i) => (
-            <NavItem
-              key={item.text}
-              icon={item.icon}
-              text={item.text}
-              onClick={() => item.path && navigate(item.path)}
-            />
-          ))}
+        {/* New Chat & Set Goals */}
+        <button
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+          onClick={() => navigate('/')}
+          aria-label="New Chat"
+          type="button"
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span>New Chat</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-4 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+          onClick={() => navigate('/set-goal')}
+          aria-label="Set Goals"
+          type="button"
+        >
+          <Target className="w-5 h-5" />
+          <span>Set Goals</span>
+        </button>
+        {/* Other Navigation */}
+        <nav className="space-y-2 flex flex-col items-center mb-4">
+          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
+          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
+          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
         </nav>
+        {/* Previous Chats Section */}
+        <div className="mt-2">
+          <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Previous Chats</div>
+          <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+            {previousChats.length === 0 && (
+              <div className="text-xs text-gray-400 px-2">No previous chats</div>
+            )}
+            {previousChats.map(chat => (
+              <div key={chat.id} className="flex items-center group px-2 py-1 rounded hover:bg-blue-100 cursor-pointer">
+                <span className="flex-1 truncate text-sm text-blue-900" onClick={() => handleOpenChat(chat)}>{chat.text}</span>
+                <button
+                  className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => handleDeleteChat(chat.id)}
+                  aria-label="Delete chat"
+                  type="button"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Main Content - with left margin for sidebar */}
