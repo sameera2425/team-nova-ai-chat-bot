@@ -6,6 +6,7 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [inputValue, setInputValue] = useState('');
   const navigate = useNavigate();
+  const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -85,31 +86,34 @@ const Index = () => {
       {/* Main Content */}
       <div className="flex-1 p-6 overflow-auto">
         {/* Greeting */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <p className="text-lg text-gray-600 mb-4 animate-fade-in">
             {getGreeting()}, Teen!
           </p>
+          <button onClick={() => navigate('/profile')} className="ml-4 flex items-center gap-2 bg-white border border-blue-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition-all duration-200">
+            <img src={profileAvatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
+          </button>
+        </div>
 
-          {/* AI Assistant Visual */}
-          <div className="flex justify-center mb-6">
-            <div className="relative animate-scale-in">
-              <img 
-                src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
-                alt="AI Assistant Sphere" 
-                className="w-32 h-32 object-contain"
-              />
-            </div>
+        {/* AI Assistant Visual */}
+        <div className="flex justify-center mb-6">
+          <div className="relative animate-scale-in">
+            <img 
+              src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
+              alt="AI Assistant Sphere" 
+              className="w-32 h-32 object-contain"
+            />
           </div>
+        </div>
 
-          {/* Main Heading */}
-          <div className="text-center mb-8 animate-fade-in">
-            <h2 className="text-2xl font-semibold text-blue-900 mb-2">
-              Hey there! I'm Tesla.
-            </h2>
-            <h3 className="text-3xl font-bold text-gray-800">
-              What do you want to learn today?
-            </h3>
-          </div>
+        {/* Main Heading */}
+        <div className="text-center mb-8 animate-fade-in">
+          <h2 className="text-2xl font-semibold text-blue-900 mb-2">
+            Hey there! I'm Tesla.
+          </h2>
+          <h3 className="text-3xl font-bold text-gray-800">
+            What do you want to learn today?
+          </h3>
         </div>
 
         {/* Feature Cards - Made smaller */}
