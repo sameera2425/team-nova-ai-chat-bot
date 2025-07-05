@@ -84,13 +84,14 @@ const ChatPage = () => {
   return (
     <div className={`min-h-screen bg-gray-50 flex relative transition-all duration-300 ${flowchartFullscreen ? 'overflow-hidden' : ''}`}> 
       {/* Left Sidebar */}
-      <div className={`${sidebarWidth} bg-blue-50 border-r border-blue-100 p-6 flex flex-col fixed inset-y-0 left-0 z-30 h-full transition-all duration-300`}> 
+      <div className={`${sidebarWidth} bg-blue-50 border-r border-blue-100 ${showFlowchart ? 'px-2' : 'px-6'} py-6 flex flex-col fixed inset-y-0 left-0 z-30 h-full transition-all duration-300`}> 
         {/* Logo */}
-        <div className={`mb-8 flex items-center gap-3 transition-all duration-300 ${sidebarContentVisible ? '' : 'justify-center'}`}>
+        <div className={`mb-8 flex items-center gap-3 transition-all duration-300 ${sidebarContentVisible ? '' : 'justify-center'}`} style={{ minWidth: '3.5rem' }}>
           <img 
             src="/lovable-uploads/c5d5e601-2da5-47ee-8dfa-80eb7846f070.png" 
             alt="Teslearn Logo" 
             className="w-10 h-10 rounded-lg"
+            style={{ minWidth: '2.5rem', minHeight: '2.5rem' }}
           />
           {sidebarContentVisible && (
             <div>
@@ -134,7 +135,7 @@ const ChatPage = () => {
         </div>
         {/* Chat Thread */}
         {!flowchartFullscreen && (
-          <div className="flex-1 flex flex-col max-w-4xl mx-auto gap-10 pb-40 pt-6 w-full">
+          <div className="flex-1 flex flex-col w-full gap-10 pb-40 pt-6 px-8">
             {messages.map((msg) => (
               msg.sender === 'ai' ? (
                 <div key={msg.id} className="flex items-start gap-4">
@@ -198,9 +199,7 @@ const ChatPage = () => {
             bottom: 0,
           }}
         >
-          <div
-            className={`animate-fade-in w-full pb-6 transition-all duration-300 ${showFlowchart && !flowchartFullscreen ? 'max-w-2xl mx-8' : 'max-w-4xl mx-auto'}`}
-          >
+          <div className="max-w-3xl mx-auto pb-6 px-8 animate-fade-in transition-all duration-300">
             <div className="relative">
               <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
                 <div className="bg-white rounded-2xl p-5">
