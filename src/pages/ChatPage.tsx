@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, X, Target } from 'lucide-react';
+import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
@@ -30,16 +30,6 @@ const messagesDummy = [
 
 const tags = ["Generate Notes", "AI-Video", "Mind-Maps"];
 
-const goalTypes = [
-  'Complete Chapter',
-  'Master Topic',
-  'Prepare for Exam',
-  'Improve Quiz Score',
-  'Build Habit',
-];
-const subjects = ['Math', 'Physics', 'History'];
-const timeOptions = ['30 mins', '1 hr', '2 hrs'];
-
 const ChatPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [input, setInput] = useState('');
@@ -48,16 +38,6 @@ const ChatPage = () => {
   const [flowchartFullscreen, setFlowchartFullscreen] = useState(false);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
-  const [goalType, setGoalType] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [deadlineType, setDeadlineType] = useState('date');
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineDays, setDeadlineDays] = useState('');
-  const [timeCommitment, setTimeCommitment] = useState('');
-  const [notes, setNotes] = useState('');
-  const [goalSubmitted, setGoalSubmitted] = useState(false);
-  const [goalSummary, setGoalSummary] = useState('');
-  const [subjectSearch, setSubjectSearch] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -101,25 +81,6 @@ const ChatPage = () => {
   const sidebarWidth = showFlowchart ? 'w-20' : 'w-64';
   const sidebarContentVisible = !showFlowchart;
 
-  // Filtered subjects for search
-  const filteredSubjects = subjects.filter(s => s.toLowerCase().includes(subjectSearch.toLowerCase()));
-
-  // Goal form submit handler
-  const handleGoalSubmit = (e) => {
-    e.preventDefault();
-    if (!goalType || !selectedSubject || (!deadlineDate && !deadlineDays) || !timeCommitment) return;
-    let summary = `You've set a goal to ${goalType.toLowerCase()} in `;
-    if (deadlineType === 'date' && deadlineDate) {
-      summary += `by ${deadlineDate}`;
-    } else if (deadlineType === 'duration' && deadlineDays) {
-      summary += `${deadlineDays} days`;
-    }
-    summary += `, spending ${timeCommitment}/day.`;
-    if (notes) summary += `\nNotes: ${notes}`;
-    setGoalSummary(summary);
-    setGoalSubmitted(true);
-  };
-
   return (
     <div className={`min-h-screen bg-gray-50 flex relative transition-all duration-300 ${flowchartFullscreen ? 'overflow-hidden' : ''}`}> 
       {/* Left Sidebar */}
@@ -155,14 +116,6 @@ const ChatPage = () => {
           {navItems.map((item, i) => (
             <NavItem key={item.text} icon={item.icon} text={item.text} active={item.active} mini={!sidebarContentVisible} />
           ))}
-          {/* Set Goal Button */}
-          <button
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover-scale mt-4 bg-green-100 text-green-800 font-semibold`}
-            onClick={() => navigate('/set-goal')}
-          >
-            <Target className="w-5 h-5" />
-            {sidebarContentVisible && <span>Set Goal</span>}
-          </button>
         </nav>
       </div>
 
