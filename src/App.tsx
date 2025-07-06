@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import SetGoalPage from "./pages/SetGoalPage";
+import QuizPage from "./pages/QuizPage";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const AnimatedRoutes = () => {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/set-goal" element={<SetGoalPage />} />
+        <Route path="/quiz" element={<QuizPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     // </AnimatePresence>

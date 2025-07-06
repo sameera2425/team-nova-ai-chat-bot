@@ -42,6 +42,8 @@ const ChatPage = () => {
   const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
   const [fadeStates, setFadeStates] = useState({});
   const messageRefs = useRef({});
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Previous chats logic
   const [previousChats, setPreviousChats] = useState(() => {
@@ -112,6 +114,12 @@ const ChatPage = () => {
 
   const handleSend = () => {
     if (!input.trim()) return;
+    // Quiz trigger
+    if (/^quiz(ze)?$/i.test(input.trim())) {
+      setInput('');
+      navigate('/quiz');
+      return;
+    }
     setMessages([...messages, { id: Date.now(), sender: 'user', text: input }]);
     // Trigger flowchart sidebar if message contains 'flowchart'
     if (/flowchart/i.test(input)) {
@@ -172,7 +180,7 @@ const ChatPage = () => {
           </div>
         )}
         {/* New Chat & Set Goals */}
-        {sidebarContentVisible && (
+        {sidebarContentVisible ? (
           <>
             <button
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
@@ -193,12 +201,31 @@ const ChatPage = () => {
               <span>Set Goals</span>
             </button>
           </>
+        ) : (
+          <>
+            <button
+              className="w-full flex items-center justify-center px-0 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/')}
+              aria-label="New Chat"
+              type="button"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
+            <button
+              className="w-full flex items-center justify-center px-0 py-3 rounded-xl mb-4 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/set-goal')}
+              aria-label="Set Goals"
+              type="button"
+            >
+              <Target className="w-5 h-5" />
+            </button>
+          </>
         )}
         {/* Other Navigation */}
         <nav className="space-y-2 flex flex-col items-center mb-4">
-          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
-          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
-          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
+          <NavItem icon={Home} text="Default Project" mini={showFlowchart} onClick={() => navigate('/')} />
+          <NavItem icon={FileText} text="My Content" mini={showFlowchart} onClick={() => navigate('/')} />
+          <NavItem icon={PenTool} text="Writing Style" mini={showFlowchart} onClick={() => navigate('/')} />
         </nav>
         {/* Previous Chats Section */}
         {sidebarContentVisible && (
@@ -326,9 +353,42 @@ const ChatPage = () => {
               <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
                 <div className="bg-white rounded-2xl p-5">
                   <div className="flex items-center gap-4 mb-4">
-                    <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
+                    <button
+                      className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                      aria-label="Add"
+                      type="button"
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    >
                       <Plus className="w-5 h-5" />
                     </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      style={{ display: 'none' }}
+                      accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"
+                      title="Upload a file or image"
+                      placeholder="Upload a file or image"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) setUploadedFile(e.target.files[0]);
+                      }}
+                    />
+                    {uploadedFile && (
+                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1">
+                        {uploadedFile.type.startsWith('image') ? (
+                          <img src={URL.createObjectURL(uploadedFile)} alt="preview" className="w-8 h-8 object-cover rounded" />
+                        ) : (
+                          <span className="text-sm text-gray-700 max-w-[120px] truncate">{uploadedFile.name}</span>
+                        )}
+                        <button
+                          className="ml-1 text-gray-400 hover:text-red-500"
+                          onClick={() => setUploadedFile(null)}
+                          aria-label="Remove file"
+                          type="button"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={input}
