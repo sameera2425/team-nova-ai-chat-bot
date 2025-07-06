@@ -2,6 +2,10 @@
 
 A modern web application built with React, TypeScript, and Vite, featuring a comprehensive UI component library and interactive pages for chat, quizzes, and user profiles.
 
+![Home Page](/public/home.png)
+![Chat](/public/chat.png)
+![Chat](/public/quiz.png)
+
 ## Features
 
 - 🎨 Modern UI with Tailwind CSS and shadcn/ui components
