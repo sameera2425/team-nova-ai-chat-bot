@@ -141,3 +141,140 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Markdown content styling */
+.markdown-content {
+  @apply text-gray-800;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  @apply font-semibold text-gray-900 mb-2 mt-4;
+}
+
+.markdown-content h1 {
+  @apply text-2xl;
+}
+
+.markdown-content h2 {
+  @apply text-xl;
+}
+
+.markdown-content h3 {
+  @apply text-lg;
+}
+
+.markdown-content p {
+  @apply mb-3 leading-relaxed;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  @apply mb-3 pl-6;
+}
+
+.markdown-content li {
+  @apply mb-1;
+}
+
+.markdown-content code {
+  @apply bg-gray-100 px-2 py-1 rounded-md text-sm font-mono text-gray-800 border border-gray-200;
+}
+
+.markdown-content pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4 border border-gray-700 shadow-lg;
+  position: relative;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  line-height: 1.6;
+}
+
+.markdown-content pre code {
+  @apply bg-transparent p-0 text-gray-100 border-none;
+}
+
+/* Inline code improvements */
+.markdown-content :not(pre) > code {
+  @apply bg-blue-50 text-blue-800 border-blue-200 font-medium;
+}
+
+/* Add subtle gradient to code blocks */
+.markdown-content pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+  border-radius: 8px 8px 0 0;
+}
+
+/* Syntax highlighting colors for common elements */
+.markdown-content pre .keyword {
+  color: #ff79c6;
+}
+
+.markdown-content pre .string {
+  color: #f1fa8c;
+}
+
+.markdown-content pre .comment {
+  color: #6272a4;
+  font-style: italic;
+}
+
+.markdown-content pre .function {
+  color: #50fa7b;
+}
+
+.markdown-content pre .number {
+  color: #bd93f9;
+}
+
+.markdown-content pre .operator {
+  color: #ff79c6;
+}
+
+/* Better scrollbar for code blocks */
+.markdown-content pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.markdown-content pre::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 3px;
+}
+
+.markdown-content pre::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 3px;
+}
+
+.markdown-content pre::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.markdown-content blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 mb-3;
+}
+
+.markdown-content a {
+  @apply text-blue-600 hover:text-blue-800 underline;
+}
+
+.markdown-content table {
+  @apply w-full border-collapse border border-gray-300 mb-3;
+}
+
+.markdown-content th,
+.markdown-content td {
+  @apply border border-gray-300 px-3 py-2 text-left;
+}
+
+.markdown-content th {
+  @apply bg-gray-100 font-semibold;
+}

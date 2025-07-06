@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus, Target, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useRAGStream } from '@/lib/stream';
+import { SessionAPI } from '@/lib/session';
 
 const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -24,13 +26,6 @@ const Index = () => {
     setPreviousChats(previousChats.filter(c => c.id !== id));
   };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
-
   const getGreeting = () => {
     const hour = currentTime.getHours();
     if (hour < 12) return "Good morning";
@@ -39,12 +34,13 @@ const Index = () => {
     return "Happy late night";
   };
 
-  const navItems = [
-    { icon: Home, text: 'Default Project', path: '/' },
-    { icon: FileText, text: 'My Content', path: '/' },
-    { icon: PenTool, text: 'Writing Style', path: '/' },
-    { icon: Target, text: 'Set a Goal', path: '/set-goal' },
-  ];
+  const handleSendMessage = async () => {
+    const sessionId = await new SessionAPI().createSession();
+    console.log('Session ID:', sessionId);
+    // navigate to chat page with session id
+    navigate(`/chat?sessionId=${sessionId}`, { state: { inputValue } });
+  };
+
 
   const features = [
     {
@@ -115,12 +111,7 @@ const Index = () => {
           <Target className="w-5 h-5" />
           <span>Set Goals</span>
         </button>
-        {/* Other Navigation */}
-        <nav className="space-y-2 flex flex-col items-center mb-4">
-          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
-          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
-          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
-        </nav>
+
         {/* Previous Chats Section */}
         <div className="mt-2">
           <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Previous Chats</div>
@@ -201,7 +192,7 @@ const Index = () => {
                     placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
                     className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
                   />
-                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={() => navigate('/chat')} aria-label="Send">
+                  <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={handleSendMessage} aria-label="Send">
                     <Send className="w-5 h-5" />
                   </button>
                 </div>

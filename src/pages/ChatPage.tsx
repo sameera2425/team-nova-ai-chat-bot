@@ -1,47 +1,44 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, Target, MessageSquare, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Home, FileText, PenTool, Send, Plus, PlayCircle, User, Bot, Target, MessageSquare, Trash2, CheckCircle, Clock, AlertCircle, Brain, Calendar, Upload, FileText as FileTextIcon, HelpCircle, BookOpen, Video, Map as MapIcon, Clipboard as ClipboardIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const navItems = [
-  { icon: Home, text: 'Default Project', path: '/' },
-  { icon: FileText, text: 'My Content', path: '/' },
-  { icon: PenTool, text: 'Writing Style', path: '/' },
-  { icon: Target, text: 'Set a Goal', path: '/set-goal' },
-];
-
-const messagesDummy = [
-  {
-    id: 1,
-    sender: 'ai',
-    text: "Welcome to Teslearn! Here's a quick video to get you started.",
-    video: true,
-    videoThumb: '/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png',
-  },
-  {
-    id: 2,
-    sender: 'user',
-    text: "Can you explain Newton's First Law?",
-  },
-  {
-    id: 3,
-    sender: 'ai',
-    text: "Absolutely! Newton's First Law states that an object at rest stays at rest and an object in motion stays in motion unless acted upon by an external force.",
-  },
-];
+import { useRAGStream } from '@/lib/stream';
+import { useSearchParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import { Goal, RAGStreamMetadata, ChatMessage, ChatSession, Quiz } from '@/types/api';
+import { useChatHistory, useSessions, SessionsAPI, generateQuiz } from '@/lib/base';
 
 const tags = ["Generate Notes", "AI-Video", "Mind-Maps"];
 
 const ChatPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState(messagesDummy);
+  const [messages, setMessages] = useState([]);
   const [showFlowchart, setShowFlowchart] = useState(false);
   const [flowchartFullscreen, setFlowchartFullscreen] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [recentMemory, setRecentMemory] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [pdfUploading, setPdfUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedPdf, setUploadedPdf] = useState<string | null>(null);
+  const [quizGenerating, setQuizGenerating] = useState<number | null>(null);
+  const [quizProgress, setQuizProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
   const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
   const [fadeStates, setFadeStates] = useState({});
   const messageRefs = useRef({});
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('sessionId');
+  const { stream } = useRAGStream();
+  const { getHistory } = useChatHistory();
+  const { getSessions } = useSessions();
+
+  // Ref to track if sessions have been loaded
+  const sessionsLoadedRef = useRef(false);
 
   // Previous chats logic
   const [previousChats, setPreviousChats] = useState(() => {
@@ -49,58 +46,63 @@ const ChatPage = () => {
     return stored ? JSON.parse(stored) : [];
   });
 
-  // Save to localStorage whenever previousChats changes
+  // Load chat history when sessionId is provided
   useEffect(() => {
-    localStorage.setItem('previousChats', JSON.stringify(previousChats));
-  }, [previousChats]);
-
-  // Add new chat to previousChats when a new user message is sent
-  useEffect(() => {
-    if (messages.length > 0) {
-      const last = messages[messages.length - 1];
-      if (last.sender === 'user' && last.text.trim()) {
-        // Only add if not already present (by text)
-        if (!previousChats.some(c => c.text === last.text)) {
-          setPreviousChats([{ text: last.text, id: last.id }, ...previousChats].slice(0, 20));
+    const loadChatHistory = async () => {
+      if (sessionId) {
+        try {
+          const history = await getHistory(sessionId);
+          
+          // Convert chat history to message format
+          const historyMessages = history.messages.map((msg: ChatMessage) => ({
+            id: msg.id || Date.now() + Math.random(), // Use message ID from API or generate unique ID
+            sender: msg.is_user ? 'user' : 'ai',
+            text: msg.message,
+            streaming: false,
+            metadata: null,
+            timestamp: msg.created_at,
+            quiz: msg.quiz // Include quiz data from API
+          }));
+          
+          setMessages(historyMessages);
+          
+          // Scroll to bottom after loading chat history
+          setTimeout(() => {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        } catch (error) {
+          console.error('Failed to load chat history:', error);
+          // Continue with empty messages if history loading fails
         }
       }
-    }
-    // eslint-disable-next-line
-  }, [messages]);
+    };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+    loadChatHistory();
+  }, [sessionId]); // Only depend on sessionId
 
+  // Load sessions list (only once)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Fade-out effect for messages near the prompt box
-  useEffect(() => {
-    const observer = new window.IntersectionObserver(
-      (entries) => {
-        const newFadeStates = { ...fadeStates };
-        entries.forEach((entry) => {
-          newFadeStates[entry.target.dataset.id] = entry.intersectionRatio < 1;
-        });
-        setFadeStates(newFadeStates);
-      },
-      {
-        root: null,
-        rootMargin: '0px 0px -120px 0px', // Adjust for fade area height
-        threshold: [0, 1],
+    const loadSessions = async () => {
+      if (sessionsLoadedRef.current) return; // Prevent multiple loads
+      
+              try {
+          setSessionsLoading(true);
+          const response = await getSessions();
+          // Sort sessions in reverse order (newest first)
+          const sortedSessions = response.sessions.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setSessions(sortedSessions);
+          sessionsLoadedRef.current = true;
+        } catch (error) {
+        console.error('Failed to load sessions:', error);
+      } finally {
+        setSessionsLoading(false);
       }
-    );
-    Object.values(messageRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-    return () => observer.disconnect();
-    // eslint-disable-next-line
-  }, [messages]);
+    };
+
+    loadSessions();
+  }, []); // Empty dependency array - only run once
 
   const getGreeting = () => {
     const hour = currentTime.getHours();
@@ -110,14 +112,90 @@ const ChatPage = () => {
     return "Happy late night";
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages([...messages, { id: Date.now(), sender: 'user', text: input }]);
+  const handleSend = async () => {
+    if (!input.trim() || isStreaming) return;
+    
+    const userMessage = { id: Date.now(), sender: 'user', text: input };
+    const aiMessageId = Date.now() + 1;
+    const aiMessage = { id: aiMessageId, sender: 'ai', text: '', streaming: true, metadata: null };
+    
+    setMessages(prev => [...prev, userMessage, aiMessage]);
+    
     // Trigger flowchart sidebar if message contains 'flowchart'
     if (/flowchart/i.test(input)) {
       setShowFlowchart(true);
     }
+    
+    const currentInput = input;
     setInput('');
+    setIsStreaming(true);
+
+    try {
+      let streamedContent = '';
+      
+      await stream(sessionId, currentInput, {
+        onChunk: (chunk) => {
+          streamedContent += chunk;
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, text: streamedContent }
+                : msg
+            )
+          );
+        },
+        onComplete: (metadata) => {
+          // Update the AI message with the new message ID from metadata
+          const newMessageId = metadata?.new_message_id;
+          
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { 
+                    ...msg, 
+                    id: newMessageId || msg.id, // Use new message ID if available
+                    streaming: false, 
+                    metadata,
+                    showQuizOption: true // Show quiz option for new messages
+                  }
+                : msg
+            )
+          );
+          setIsStreaming(false);
+          
+          // Handle metadata (goals, memory, etc.)
+          if (metadata?.goals_created?.length > 0) {
+            console.log('Goals created:', metadata.goals_created);
+            setGoals(prev => [...prev, ...metadata.goals_created]);
+          }
+          if (metadata?.memory_saved && metadata?.memory_content) {
+            console.log('Memory saved:', metadata.memory_content);
+            setRecentMemory(metadata.memory_content);
+          }
+        },
+        onError: (error) => {
+          console.error('Streaming error:', error);
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, text: `Error: ${error}`, streaming: false }
+                : msg
+            )
+          );
+          setIsStreaming(false);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to start streaming:', error);
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, text: 'Failed to get response. Please try again.', streaming: false }
+            : msg
+        )
+      );
+      setIsStreaming(false);
+    }
   };
 
   const handleCloseFlowchart = () => {
@@ -139,6 +217,207 @@ const ChatPage = () => {
   };
   const handleDeleteChat = (id) => {
     setPreviousChats(previousChats.filter(c => c.id !== id));
+  };
+
+  const handleOpenSession = (sessionId: number) => {
+    navigate(`/chat?sessionId=${sessionId}`);
+  };
+
+  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !sessionId) return;
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      alert('Please select a PDF file');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      setPdfUploading(true);
+      setUploadProgress(0);
+      
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      const sessionsAPI = new SessionsAPI();
+      await sessionsAPI.uploadPDF(sessionId, file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadedPdf(file.name);
+      
+      // Reset progress after 2 seconds
+      setTimeout(() => {
+        setUploadProgress(0);
+        setPdfUploading(false);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('PDF upload failed:', error);
+      alert('Failed to upload PDF. Please try again.');
+      setPdfUploading(false);
+      setUploadProgress(0);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  function MarkdownViewer({ text }: { text: string }) {
+    if (!text) return null;
+    return (
+      <div className="markdown-content">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  const MetadataDisplay = ({ metadata }: { metadata: RAGStreamMetadata | null }) => {
+    if (!metadata) return null;
+
+    const hasGoals = metadata.goals_created && metadata.goals_created.length > 0;
+    const hasMemory = metadata.memory_saved && metadata.memory_content;
+
+    if (!hasGoals && !hasMemory) return null;
+
+    return (
+      <div className="mt-4 space-y-3">
+        {hasGoals && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-blue-800">Goals Created</span>
+              <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full">
+                {metadata.goals_created.length} new
+              </span>
+            </div>
+            <div className="space-y-2">
+              {metadata.goals_created.map((goal) => (
+                <div key={goal.id} className="bg-white rounded-md p-3 border border-blue-100">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {goal.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                      {goal.status === 'in_progress' && <Clock className="w-4 h-4 text-yellow-500" />}
+                      {goal.status === 'pending' && <AlertCircle className="w-4 h-4 text-gray-400" />}
+                      {goal.status === 'cancelled' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 text-sm">{goal.title}</h4>
+                      <p className="text-gray-600 text-xs mt-1">{goal.description}</p>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <span>Deadline: {new Date(goal.deadline).toLocaleDateString()}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          goal.status === 'completed' ? 'bg-green-100 text-green-700' :
+                          goal.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
+                          goal.status === 'pending' ? 'bg-gray-100 text-gray-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {goal.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {hasMemory && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-blue-800">Memory Updated</span>
+              <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded-full">
+                New insight saved
+              </span>
+            </div>
+            <div className="bg-white rounded-md p-3 border border-blue-100">
+              <p className="text-gray-700 text-sm">{metadata.memory_content}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const handleGenerateQuiz = async (messageId: number) => {
+    if (quizGenerating) return;
+    
+    try {
+      setQuizGenerating(messageId);
+      setQuizProgress(0);
+      
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setQuizProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      const response = await generateQuiz(messageId);
+      
+      clearInterval(progressInterval);
+      setQuizProgress(100);
+      
+      // Update the message with the generated quiz
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { 
+                ...msg, 
+                quiz: {
+                  id: response.quiz_id,
+                  title: response.title,
+                  description: response.description,
+                  questions: response.questions
+                }
+              }
+            : msg
+        )
+      );
+      
+      // Reset progress after 2 seconds
+      setTimeout(() => {
+        setQuizProgress(0);
+        setQuizGenerating(null);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to generate quiz:', error);
+      alert('Failed to generate quiz. Please try again.');
+      setQuizGenerating(null);
+      setQuizProgress(0);
+    }
+  };
+
+  const handleTakeQuiz = (quizId: number) => {
+    navigate(`/quiz/${quizId}`);
   };
 
   return (
@@ -195,32 +474,39 @@ const ChatPage = () => {
           </>
         )}
         {/* Other Navigation */}
-        <nav className="space-y-2 flex flex-col items-center mb-4">
-          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
-          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
-          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
-        </nav>
-        {/* Previous Chats Section */}
+
+        {/* Sessions Section */}
         {sidebarContentVisible && (
           <div className="mt-2">
-            <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Previous Chats</div>
+            <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Chat Sessions</div>
             <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
-              {previousChats.length === 0 && (
-                <div className="text-xs text-gray-400 px-2">No previous chats</div>
-              )}
-              {previousChats.map(chat => (
-                <div key={chat.id} className="flex items-center group px-2 py-1 rounded hover:bg-blue-100 cursor-pointer">
-                  <span className="flex-1 truncate text-sm text-blue-900" onClick={() => handleOpenChat(chat)}>{chat.text}</span>
-                  <button
-                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDeleteChat(chat.id)}
-                    aria-label="Delete chat"
-                    type="button"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+              {sessionsLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                 </div>
-              ))}
+              ) : sessions.length === 0 ? (
+                <div className="text-xs text-gray-400 px-2">No chat sessions</div>
+              ) : (
+                sessions.map(session => (
+                  <div 
+                    key={session.id} 
+                    className={`flex items-center group px-2 py-2 rounded hover:bg-blue-100 cursor-pointer transition-colors ${
+                      sessionId === session.id.toString() ? 'bg-blue-100' : ''
+                    }`}
+                    onClick={() => handleOpenSession(session.id)}
+                  >
+                    <Calendar className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-blue-900 font-medium truncate">
+                        Session #{session.id}
+                      </div>
+                      <div className="text-xs text-blue-600 truncate">
+                        {new Date(session.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -245,8 +531,74 @@ const ChatPage = () => {
         </div>
         {/* Chat Thread */}
         {!flowchartFullscreen && (
-          <div className="flex-1 flex flex-col w-full gap-10 pb-40 pt-6 px-8 relative">
-            {messages.map((msg) => (
+          <div className="flex-1 flex flex-col w-full gap-10 pb-40 pt-6 px-8 relative chat-container overflow-y-auto">
+            <div className="max-w-4xl mx-auto w-full">
+            {messages.length === 0 ? (
+              // Show feature cards when no messages
+              <div className="flex flex-col items-center w-full">
+                <div className="relative animate-scale-in mb-6 pt-6">
+                  <img 
+                    src="/lovable-uploads/7285c574-a54d-4f95-ae36-27a5b52831af.png" 
+                    alt="AI Assistant Sphere" 
+                    className="w-32 h-32 object-contain"
+                  />
+                </div>
+                {/* Main Heading */}
+                <div className="text-center mb-8 animate-fade-in">
+                  <h2 className="text-2xl font-semibold text-blue-900 mb-2">
+                    Hey there! I'm Tesla.
+                  </h2>
+                  <h3 className="text-3xl font-bold text-gray-800">
+                    What do you want to learn today?
+                  </h3>
+                </div>
+                {/* Feature Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8 w-full max-w-6xl">
+                  {[
+                    {
+                      title: "AI-Videos",
+                      icon: "Video",
+                      description: "Unique generated educational videos tailored to learning needs every time."
+                    },
+                    {
+                      title: "Mindmaps",
+                      icon: "Map",
+                      description: "Visual learning maps that simplify complex topics. Visual learning."
+                    },
+                    {
+                      title: "Smart Time-Table",
+                      icon: "Calendar",
+                      description: "Unique generated educational videos tailored to your learning."
+                    },
+                    {
+                      title: "Instant Quizzes",
+                      icon: "Clipboard",
+                      description: "Unique videos tailored to your learning needs every time."
+                    }
+                  ].map((feature, index) => (
+                    <div
+                      key={feature.title}
+                      className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-3">
+                        {feature.icon === "Video" && <Video className="w-4 h-4 text-gray-600" />}
+                        {feature.icon === "Map" && <MapIcon className="w-4 h-4 text-gray-600" />}
+                        {feature.icon === "Calendar" && <Calendar className="w-4 h-4 text-gray-600" />}
+                        {feature.icon === "Clipboard" && <ClipboardIcon className="w-4 h-4 text-gray-600" />}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-600 text-xs leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((msg) => (
               msg.sender === 'ai' ? (
                 <div
                   key={msg.id}
@@ -266,9 +618,74 @@ const ChatPage = () => {
                         <span className="px-2 py-0.5 bg-gray-100 text-xs text-gray-500 rounded-md font-medium ml-2">AI-Video</span>
                       )}
                     </div>
-                    <div className="text-base text-gray-800 mb-3 whitespace-pre-line">
-                      {msg.text}
+                    <div className="text-base text-gray-800 mb-3">
+                      <div className="prose prose-gray max-w-none prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:p-3 prose-pre:rounded-lg">
+                        <MarkdownViewer text={msg.text} />
+                      </div>
+                      {msg.streaming && (
+                        <span className="inline-block w-2 h-5 bg-blue-600 ml-1 animate-pulse"></span>
+                      )}
                     </div>
+                    <MetadataDisplay metadata={msg.metadata} />
+                    
+                    {/* Quiz Section */}
+                    {(msg.quiz || msg.showQuizOption || (msg.sender === 'ai' && !msg.quiz && msg.text.length > 200)) && (
+                      <div className="mt-4">
+                        {msg.quiz ? (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <BookOpen className="w-4 h-4 text-blue-600" />
+                              <span className="font-semibold text-blue-800">Quiz Available</span>
+                            </div>
+                            <div className="bg-white rounded-md p-3 border border-blue-100 mb-3">
+                              <h4 className="font-medium text-gray-900 text-sm mb-1">{msg.quiz.title}</h4>
+                              <p className="text-gray-600 text-xs">{msg.quiz.description}</p>
+                            </div>
+                            <button
+                              onClick={() => handleTakeQuiz(msg.quiz.id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <HelpCircle className="w-4 h-4" />
+                              Take Quiz
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <HelpCircle className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm text-blue-700">Test your knowledge</span>
+                              </div>
+                              {quizGenerating === msg.id ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="text-xs text-blue-600">Generating quiz...</span>
+                                  <div className="w-16 bg-blue-200 rounded-full h-1">
+                                    <div 
+                                      className="bg-blue-600 h-1 rounded-full transition-all duration-300" 
+                                      style={{ width: `${quizProgress}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleGenerateQuiz(msg.id)}
+                                  disabled={quizGenerating !== null}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    quizGenerating !== null
+                                      ? 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
+                                >
+                                  Generate Quiz
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {msg.video && (
                       <>
                         <div className="italic text-gray-400 mb-2">Preparing Video...</div>
@@ -306,10 +723,12 @@ const ChatPage = () => {
                   />
                 </div>
               )
-            ))}
+            ))
+            )}
             <div ref={chatEndRef} />
             {/* Fade-out gradient at the bottom of chat area */}
             <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-40 z-30" style={{background: 'linear-gradient(to top, rgba(249,250,251,0.98) 60%, transparent 100%)'}} />
+            </div>
           </div>
         )}
         {/* Prompt Box - Fixed at bottom */}
@@ -326,31 +745,73 @@ const ChatPage = () => {
               <div className="p-[2px] bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-2xl">
                 <div className="bg-white rounded-2xl p-5">
                   <div className="flex items-center gap-4 mb-4">
-                    <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
-                      <Plus className="w-5 h-5" />
-                    </button>
+
+                    {sessionId && (
+                      <button 
+                        className={`p-2 rounded-lg transition-colors duration-200 ${
+    
+                            'bg-gray-100 text-gray-600 hover:bg-blue-200'
+                        }`} 
+                        disabled={isStreaming || pdfUploading}
+                        onClick={triggerFileUpload}
+                        aria-label="Upload PDF"
+                      >
+                        <Upload className="w-5 h-5" />
+                      </button>
+                    )}
                     <input
                       type="text"
                       value={input}
                       onChange={e => setInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSend()}
-                      placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
-                      className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
+                      onKeyDown={e => e.key === 'Enter' && !isStreaming && !pdfUploading && handleSend()}
+                      placeholder={
+                        isStreaming ? "AI is responding..." : 
+                        pdfUploading ? "Uploading PDF..." :
+                        "Ask me anything — videos, quizzes, mindmaps or your doubts!"
+                      }
+                      disabled={isStreaming || pdfUploading}
+                      className={`flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent ${(isStreaming || pdfUploading) ? 'opacity-50' : ''}`}
                     />
-                    <button className="p-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" onClick={handleSend} aria-label="Send">
+                    <button 
+                      className={`p-3 rounded-lg transition-colors duration-200 ${
+                        isStreaming || pdfUploading
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`} 
+                      onClick={handleSend} 
+                      disabled={isStreaming || pdfUploading}
+                      aria-label="Send"
+                    >
                       <Send className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {tags.map((tag) => (
-                      <button
-                        key={tag}
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {/* PDF Upload Progress */}
+                  {pdfUploading && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileTextIcon className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm text-blue-600 font-medium">Uploading PDF...</span>
+                        <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Uploaded PDF Indicator */}
+                  {uploadedPdf && !pdfUploading && (
+                    <div className="mb-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                      <FileTextIcon className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-700 font-medium">PDF uploaded: {uploadedPdf}</span>
+                    </div>
+                  )}
+                  
+
                 </div>
               </div>
             </div>
@@ -414,6 +875,15 @@ End
           </div>
         </div>
       </div>
+      
+      {/* Hidden file input for PDF upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        onChange={handlePdfUpload}
+        className="hidden"
+      />
     </div>
   );
 };

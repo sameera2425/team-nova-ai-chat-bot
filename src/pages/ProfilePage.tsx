@@ -1,6 +1,8 @@
 import React from 'react';
-import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight, Target, MessageSquare, Trash2 } from 'lucide-react';
+import { Home, FileText, PenTool, Search, User, Edit, LogOut, BookOpen, Video, BarChart2, Award, Bell, Star, TrendingUp, BadgeCheck, ChevronRight, Target, MessageSquare, Trash2, CheckCircle, Clock, AlertCircle, Brain, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { GoalsMemoryAPI, getQuizzes } from '@/lib/base';
+import { Goal, GlobalMemoryResponse, Quiz } from '@/types/api';
 
 const navItems = [
   { icon: Home, text: 'Default Project', path: '/' },
@@ -10,17 +12,12 @@ const navItems = [
 ];
 
 const dummyUser = {
-  name: 'Jane Doe',
-  email: 'jane.doe@email.com',
-  grade: 'Grade 10',
-  avatar: 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane',
+  name: 'Maria Kevin',
+  email: 'maria.kevin@somaiya.edu',
+  grade: 'Grade 12',
+  avatar: 'https://api.dicebear.com/7.x/thumbs/svg?seed=Maria',
 };
 
-const learningGoals = [
-  { goal: 'Master Algebra', progress: 80 },
-  { goal: 'Finish Physics Chapter 3', progress: 60 },
-  { goal: 'Practice Essay Writing', progress: 40 },
-];
 
 const performance = {
   score: 78,
@@ -51,6 +48,62 @@ const recommendations = [
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const [goals, setGoals] = React.useState<Goal[]>([]);
+  const [globalMemory, setGlobalMemory] = React.useState<string>('');
+  const [quizzes, setQuizzes] = React.useState<Quiz[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [quizzesLoading, setQuizzesLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // API client instance
+  const api = React.useMemo(() => new GoalsMemoryAPI(), []);
+
+  // Fetch goals and memory on component mount
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch goals and memory in parallel
+        const [goalsResponse, memoryResponse] = await Promise.all([
+          api.getGoals(),
+          api.getGlobalMemory()
+        ]);
+        
+        setGoals(goalsResponse.goals);
+        setGlobalMemory(memoryResponse.preferences);
+      } catch (err) {
+        console.error('Failed to fetch profile data:', err);
+        setError('Failed to load profile data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [api]);
+
+  // Fetch quizzes on component mount
+  React.useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        setQuizzesLoading(true);
+        const response = await getQuizzes();
+        setQuizzes(response.results);
+      } catch (err) {
+        console.error('Failed to fetch quizzes:', err);
+      } finally {
+        setQuizzesLoading(false);
+      }
+    };
+
+    fetchQuizzes();
+  }, []);
+
+  const handleTakeQuiz = (quizId: number) => {
+    navigate(`/quiz/${quizId}`);
+  };
 
   // Previous chats logic
   const [previousChats, setPreviousChats] = React.useState(() => {
@@ -177,17 +230,126 @@ const ProfilePage = () => {
                 <Edit className="w-4 h-4" /> Edit Goals
               </button>
             </div>
-            <div className="space-y-4">
-              {learningGoals.map((goal) => (
-                <div key={goal.goal} className="flex flex-col gap-1">
-                  <div className="text-gray-700 font-medium">{goal.goal}</div>
-                  <div className="w-full bg-blue-100 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${goal.progress}%` }}></div>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : error ? (
+              <div className="text-red-600 text-center py-4">{error}</div>
+            ) : goals.length === 0 ? (
+              <div className="text-gray-500 text-center py-8">No goals set yet. Create your first learning goal!</div>
+            ) : (
+              <div className="space-y-4">
+                {goals.map((goal) => (
+                  <div key={goal.id} className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        {goal.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                        {goal.status === 'in_progress' && <Clock className="w-5 h-5 text-yellow-500" />}
+                        {goal.status === 'pending' && <AlertCircle className="w-5 h-5 text-gray-400" />}
+                        {goal.status === 'cancelled' && <AlertCircle className="w-5 h-5 text-red-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm mb-1">{goal.title}</h4>
+                        <p className="text-gray-600 text-xs mb-2">{goal.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            Deadline: {new Date(goal.deadline).toLocaleDateString()}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            goal.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            goal.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
+                            goal.status === 'pending' ? 'bg-gray-100 text-gray-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {goal.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-blue-600 font-semibold">{goal.progress}%</div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Global Memory Preferences */}
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
+          <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <Brain className="w-6 h-6 text-blue-600" />
+              <div className="text-lg font-semibold text-blue-900">AI Learning Preferences</div>
             </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : error ? (
+              <div className="text-red-600 text-center py-4">{error}</div>
+            ) : globalMemory ? (
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <div className="space-y-2">
+                  {globalMemory.split('\n').map((preference, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed">{preference.trim()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-center py-8">No learning preferences set yet.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Quizzes Section */}
+        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
+          <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <HelpCircle className="w-6 h-6 text-blue-600" />
+                <div className="text-lg font-semibold text-blue-900">My Quizzes</div>
+              </div>
+              <span className="text-sm text-gray-500">{quizzes.length} quizzes</span>
+            </div>
+            {quizzesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : quizzes.length === 0 ? (
+              <div className="text-gray-500 text-center py-8">No quizzes created yet. Start a chat to generate quizzes!</div>
+            ) : (
+              <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                {quizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-blue-50 rounded-lg p-4 border border-blue-100 hover:bg-blue-100 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm mb-1">{quiz.title}</h4>
+                        <p className="text-gray-600 text-xs mb-2">{quiz.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Session #{quiz.session_id}</span>
+                          <span>{quiz.question_count} questions</span>
+                          {quiz.created_at && (
+                            <span>{new Date(quiz.created_at).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleTakeQuiz(quiz.id)}
+                        className="ml-4 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors flex items-center gap-1"
+                      >
+                        <HelpCircle className="w-3 h-3" />
+                        Take Quiz
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -242,42 +404,6 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Learning Streak & Badges */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
-          <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col items-center">
-            <div className="text-lg font-semibold text-blue-900 mb-4">Learning Streak & Badges</div>
-            <div className="flex items-center gap-6 mb-4">
-              <TrendingUp className="w-8 h-8 text-blue-600" />
-              <div className="text-2xl font-bold text-blue-900">7 days</div>
-              <span className="text-gray-500">Current Streak</span>
-            </div>
-            <div className="flex flex-wrap gap-3 justify-center mb-4">
-              {badges.map((b) => (
-                <div key={b.label} className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-1 text-blue-700 text-xs font-semibold">
-                  <b.icon className="w-4 h-4" /> {b.label}
-                </div>
-              ))}
-            </div>
-            <div className="text-blue-600 font-semibold text-center">Keep it up! 🚀</div>
-          </div>
-
-          {/* Recommendations */}
-          <div className="flex-1 bg-white rounded-2xl shadow p-8 hover:shadow-lg transition-all duration-200 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-lg font-semibold text-blue-900">Recommended for You</div>
-              <button className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
-                Generate More <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              {recommendations.map((r) => (
-                <div key={r.label} className="flex items-center gap-3 bg-blue-50 rounded-lg px-3 py-2 text-blue-700 text-sm font-medium">
-                  <r.icon className="w-5 h-5" /> {r.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* Settings & Account */}
         <div className="flex flex-col md:flex-row gap-8 mb-8 px-6">
@@ -298,6 +424,8 @@ const ProfilePage = () => {
             </button>
           </div>
         </div>
+
+
       </div>
     </div>
   );
