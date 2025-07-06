@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Home, FileText, PenTool, Search, Target, User, Bell, MessageSquare, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { QuizAPI } from '@/lib/base';
+import { Quiz, QuizQuestion, QuizSubmissionResult } from '@/types/api';
 
 const navItems = [
   { icon: Home, text: 'Default Project', path: '/' },
@@ -10,105 +12,146 @@ const navItems = [
 ];
 const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
 
-const quizData = {
-  title: 'Quiz: Total Internal Reflection',
-  subheading: 'Answer the following questions to check your understanding.',
-  questions: [
-    {
-      id: 1,
-      topic: 'Critical Angle',
-      text: 'What is the critical angle for glass-air interface?',
-      options: ['42 degrees', '60 degrees', '90 degrees', '30 degrees'],
-      correct: 0,
-      explanation: 'The critical angle for glass-air interface is approximately 42 degrees due to the refractive index of glass (~1.5). Angles higher than this will cause total internal reflection.'
-    },
-    {
-      id: 2,
-      topic: 'Refraction',
-      text: 'Which law governs the bending of light as it passes from one medium to another?',
-      options: ['Snell\'s Law', 'Newton\'s Law', 'Ohm\'s Law', 'Hooke\'s Law'],
-      correct: 0,
-      explanation: 'Snell\'s Law describes how light bends (refracts) when passing between different media.'
-    },
-    {
-      id: 3,
-      topic: 'TIR Application',
-      text: 'Total internal reflection can only occur when:',
-      options: [
-        'Light travels from a denser to a rarer medium',
-        'Light travels from a rarer to a denser medium',
-        'The angle of incidence is less than the critical angle',
-        'The media have the same refractive index'
-      ],
-      correct: 0,
-      explanation: 'TIR occurs only when light moves from a denser to a rarer medium and the angle of incidence exceeds the critical angle.'
-    }
-  ]
-};
-
-const understandingTopics = [
-  { label: 'Critical Angle', key: 'Critical Angle' },
-  { label: 'Refraction', key: 'Refraction' },
-  { label: 'TIR Application', key: 'TIR Application' },
-];
-
 const QuizPage = () => {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState(Array(quizData.questions.length).fill(null));
+  const { quizId } = useParams<{ quizId: string }>();
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [answers, setAnswers] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<QuizSubmissionResult[]>([]);
 
   // Previous chats logic
   const [previousChats, setPreviousChats] = useState(() => {
     const stored = localStorage.getItem('previousChats');
     return stored ? JSON.parse(stored) : [];
   });
+
   useEffect(() => {
     localStorage.setItem('previousChats', JSON.stringify(previousChats));
   }, [previousChats]);
-  const handleOpenChat = (chat) => {
+
+  const handleOpenChat = (chat: { id: string; text: string }) => {
     // For demo: navigate to chat page and set input (if needed)
     navigate('/chat');
   };
-  const handleDeleteChat = (id) => {
+
+  const handleDeleteChat = (id: string) => {
     setPreviousChats(previousChats.filter(c => c.id !== id));
   };
 
+  // Fetch quiz data
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      if (!quizId) return;
+      
+      try {
+        setLoading(true);
+        const quizApi = new QuizAPI();
+        const quizData = await quizApi.getQuiz(parseInt(quizId));
+        setQuiz(quizData);
+        setAnswers(new Array(quizData.questions?.length || 0).fill(null));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load quiz');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuiz();
+  }, [quizId]);
+
   // Calculate progress
   const answeredCount = answers.filter(a => a !== null).length;
-  const total = quizData.questions.length;
+  const total = quiz?.questions?.length || 0;
 
-  // Calculate results
-  const correctCount = answers.filter((a, i) => a === quizData.questions[i].correct).length;
-  const topicScores = understandingTopics.map(topic => {
-    const topicQuestions = quizData.questions.filter(q => q.topic === topic.key);
-    const correct = topicQuestions.filter((q, i) => answers[quizData.questions.indexOf(q)] === q.correct).length;
-    return {
-      ...topic,
-      percent: topicQuestions.length ? Math.round((correct / topicQuestions.length) * 100) : 0
-    };
-  });
-  const lowTopics = topicScores.filter(t => t.percent < 70);
+  // Calculate results for display
+  const topicScores = quiz?.questions?.reduce((acc, q) => {
+    const topic = q.question_text.split(':')[0];
+    const result = results.find(r => r.question_id === q.id);
+    
+    if (!acc[topic]) {
+      acc[topic] = { correct: 0, total: 0 };
+    }
+    
+    acc[topic].total++;
+    if (result?.is_correct) {
+      acc[topic].correct++;
+    }
+    
+    return acc;
+  }, {} as Record<string, { correct: number; total: number; }>) || {};
+
+  const topicPercentages = Object.entries(topicScores).map(([topic, scores]) => ({
+    label: topic,
+    key: topic,
+    percent: Math.round((scores.correct / scores.total) * 100)
+  }));
+
+  const lowTopics = topicPercentages.filter(t => t.percent < 70);
 
   // Handlers
-  const handleSelect = (qIdx, optIdx) => {
+  const handleSelect = (qIdx: number, optIdx: number) => {
     if (submitted) return;
     setAnswers(a => a.map((v, i) => (i === qIdx ? optIdx : v)));
   };
-  const handleSubmit = () => {
+
+  const handleSubmit = async () => {
+    if (!quiz || !quiz.id) return;
+
     setFadeOut(true);
-    setTimeout(() => {
-      setSubmitted(true);
+    try {
+      const quizApi = new QuizAPI();
+      const submitData = {
+        answers: answers.map((answerIndex, questionIndex) => ({
+          question_id: quiz.questions![questionIndex].id,
+          user_answer: quiz.questions![questionIndex].options[answerIndex]
+        }))
+      };
+
+      console.log('Submitting quiz with data:', submitData);
+      const response = await quizApi.submitQuiz(quiz.id, submitData);
+      console.log('Quiz submission response:', response);
+
+      if (response && response.results) {
+        setResults(response.results);
+        setSubmitted(true);
+        setError(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (err) {
+      console.error('Failed to submit quiz:', err);
+      setError(err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.');
+      setSubmitted(false);
+    } finally {
       setFadeOut(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 500);
+    }
   };
+
   const handleRetake = () => {
-    setAnswers(Array(quizData.questions.length).fill(null));
+    if (!quiz?.questions) return;
+    setAnswers(new Array(quiz.questions.length).fill(null));
     setSubmitted(false);
     setFadeOut(false);
+    setResults([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading quiz...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+  }
+
+  if (!quiz || !quiz.questions) {
+    return <div className="min-h-screen flex items-center justify-center">Quiz not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -154,12 +197,7 @@ const QuizPage = () => {
           <Target className="w-5 h-5" />
           <span>Set Goals</span>
         </button>
-        {/* Other Navigation */}
-        <nav className="space-y-2 flex flex-col items-center mb-4">
-          <NavItem icon={Home} text="Default Project" onClick={() => navigate('/')} />
-          <NavItem icon={FileText} text="My Content" onClick={() => navigate('/')} />
-          <NavItem icon={PenTool} text="Writing Style" onClick={() => navigate('/')} />
-        </nav>
+
         {/* Previous Chats Section */}
         <div className="mt-2">
           <div className="text-xs font-semibold text-blue-800 mb-2 px-2">Previous Chats</div>
@@ -197,30 +235,19 @@ const QuizPage = () => {
         </div>
         {/* Top Section: Title, Subheading, Progress Bar - Sticky */}
         <div className="w-full max-w-2xl mx-auto flex flex-col items-center px-4 sticky top-[56px] z-10 bg-gray-50 pt-6 pb-4" style={{transition: 'box-shadow 0.2s', boxShadow: '0 2px 8px 0 rgba(0,0,0,0.02)'}}>
-          <h1 className="text-2xl md:text-3xl font-semibold text-center text-blue-900 mb-2">{quizData.title}</h1>
-          <div className="text-base text-gray-500 text-center mb-6">{quizData.subheading}</div>
-          {/* Progress Bar */}
-          <div className="w-full mb-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-600">Progress: {answeredCount} of {total} answered</span>
-            </div>
-            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-1.5 rounded-full bg-blue-500 transition-all duration-300"
-                style={{ width: `${(answeredCount / total) * 100}%` }}
-              />
-            </div>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-center text-blue-900 mb-2">{quiz.title}</h1>
+          <div className="text-base text-gray-500 text-center mb-6">{quiz.description}</div>
+
         </div>
         {/* Quiz Questions or Results */}
         <div className="w-full max-w-2xl mx-auto flex-1 px-4 pb-16">
           {/* Questions Section */}
           {!submitted && (
             <div className={`space-y-6 transition-opacity duration-500 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-              {quizData.questions.map((q, qIdx) => (
+              {quiz.questions.map((q, qIdx) => (
                 <div key={q.id} className="bg-white rounded-xl shadow p-6 md:p-8 flex flex-col gap-4">
                   <div className="text-lg font-semibold text-blue-900 mb-2">
-                    {qIdx + 1} {q.text}
+                    {qIdx + 1}. {q.question_text}
                   </div>
                   <div className="flex flex-col gap-2">
                     {q.options.map((opt, optIdx) => (
@@ -245,7 +272,13 @@ const QuizPage = () => {
                 <button
                   className={`px-8 py-3 bg-blue-600 text-white rounded-xl font-bold text-lg shadow hover:bg-blue-700 transition-all duration-200 hover:scale-105 ${answeredCount !== total ? 'opacity-60 cursor-not-allowed' : ''}`}
                   disabled={answeredCount !== total}
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    console.log('Submit button clicked');
+                    console.log('Quiz ID:', quiz?.id);
+                    console.log('Answers:', answers);
+                    handleSubmit();
+                  }}
+                  type="button"
                 >
                   Submit Quiz
                 </button>
@@ -257,57 +290,64 @@ const QuizPage = () => {
             <div className="space-y-8 animate-fade-in">
               {/* Score Summary */}
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">🎉 You scored {correctCount}/{total}</div>
-              </div>
-              {/* Understanding Chart */}
-              <div className="bg-white rounded-xl shadow p-6">
-                <div className="text-lg font-semibold text-blue-900 mb-4">Understanding by Topic</div>
-                <div className="space-y-4">
-                  {topicScores.map((t, i) => (
-                    <div key={t.key} className="flex items-center gap-4">
-                      <span className="w-40 text-gray-700 text-sm font-medium">{t.label}</span>
-                      <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-4 rounded-full ${t.percent >= 70 ? 'bg-green-400' : 'bg-orange-400'}`}
-                          style={{ width: `${t.percent}%`, transition: 'width 1s' }}
-                        />
-                      </div>
-                      <span className={`text-sm font-semibold ${t.percent >= 70 ? 'text-green-700' : 'text-orange-700'}`}>{t.percent}% Understood</span>
-                    </div>
-                  ))}
+                <div className="text-3xl font-bold text-green-600 mb-2">
+                  You scored {results.filter(r => r.is_correct).length}/{total}
                 </div>
               </div>
+
               {/* Question-by-Question Review */}
               <div className="space-y-6">
-                {quizData.questions.map((q, qIdx) => {
-                  const userCorrect = answers[qIdx] === q.correct;
-                  return (
-                    <div key={q.id} className="bg-white rounded-xl shadow p-6 flex flex-col gap-2">
-                      <div className={`text-base font-semibold ${userCorrect ? 'text-green-700' : 'text-red-600'}`}>{userCorrect ? '✔️' : '❌'} Question {qIdx + 1} — {userCorrect ? 'Correct' : 'Incorrect'}</div>
-                      <div className="text-gray-800 text-base mb-1">{q.text}</div>
-                      <div className="text-sm text-gray-700 mb-1">Your Answer: <span className="font-semibold">{q.options[answers[qIdx]]}</span></div>
-                      <div className="text-sm text-blue-700 mb-1">Correct Answer: <span className="font-semibold">{q.options[q.correct]}</span></div>
-                      <div className="text-xs text-gray-600 italic pl-2 border-l-4 border-blue-200 mt-1">Why this answer is correct: {q.explanation}</div>
+                {results.map((result, qIdx) => (
+                  <div key={result.question_id} className="bg-white rounded-xl shadow p-6 flex flex-col gap-3">
+                    <div className={`text-base font-semibold ${result.is_correct ? 'text-green-700' : 'text-red-600'}`}>
+                      Question {qIdx + 1} - {result.is_correct ? 'Correct' : 'Incorrect'}
                     </div>
-                  );
-                })}
+                    <div className="text-gray-800 text-base">{result.question_text}</div>
+                    
+                    {/* Options List */}
+                    <div className="space-y-2">
+                      {result.options.map((option, optIdx) => (
+                        <div 
+                          key={optIdx} 
+                          className={`px-4 py-2 rounded-lg ${
+                            option === result.correct_answer 
+                              ? 'bg-green-50 border border-green-200' 
+                              : option === result.user_answer && option !== result.correct_answer
+                              ? 'bg-red-50 border border-red-200'
+                              : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {option === result.correct_answer && (
+                              <span className="text-green-600">✓</span>
+                            )}
+                            {option === result.user_answer && option !== result.correct_answer && (
+                              <span className="text-red-600">✗</span>
+                            )}
+                            <span className={`${
+                              option === result.correct_answer 
+                                ? 'text-green-700' 
+                                : option === result.user_answer && option !== result.correct_answer
+                                ? 'text-red-700'
+                                : 'text-gray-700'
+                            }`}>
+                              {option}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
+                ))}
               </div>
-              {/* Areas to Improve */}
-              {lowTopics.length > 0 && (
-                <div className="bg-white rounded-xl shadow p-6">
-                  <div className="text-lg font-semibold text-orange-700 mb-2 flex items-center gap-2">📌 Areas to Improve:</div>
-                  <ul className="list-disc pl-6 text-sm text-orange-700">
-                    {lowTopics.map(t => (
-                      <li key={t.key}>{t.label}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+
               {/* Retake Quiz Button */}
               <div className="flex justify-center pt-4">
                 <button
                   className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold text-lg shadow hover:bg-blue-700 transition-all duration-200 hover:scale-105"
                   onClick={handleRetake}
+                  type="button"
                 >
                   Retake Quiz
                 </button>

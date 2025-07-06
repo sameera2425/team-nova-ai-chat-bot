@@ -30,6 +30,21 @@ export interface QuizQuestion {
     correct_answer: string;
 }
 
+export interface QuizSubmissionResult {
+    question_id: number;
+    question_text: string;
+    options: string[];
+    user_answer: string;
+    correct_answer: string;
+    is_correct: boolean;
+    attempt_id: number;
+}
+
+export interface QuizSubmissionResponse {
+    message: string;
+    results: QuizSubmissionResult[];
+}
+
 export interface Quiz {
     id: number;
     title: string;

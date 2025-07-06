@@ -22,7 +22,7 @@ const AnimatedRoutes = () => {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/set-goal" element={<SetGoalPage />} />
-        <Route path="/quiz" element={<QuizPage />} />
+        <Route path="/quiz/:quizId" element={<QuizPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     // </AnimatePresence>

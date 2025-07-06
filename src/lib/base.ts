@@ -1,4 +1,4 @@
-import { GoalsListResponse, GlobalMemoryResponse, ChatHistoryResponse, SessionsListResponse, PDFUploadResponse, GenerateQuizResponse, QuizzesListResponse, Quiz } from '@/types/api';
+import { GoalsListResponse, GlobalMemoryResponse, ChatHistoryResponse, SessionsListResponse, PDFUploadResponse, GenerateQuizResponse, QuizzesListResponse, Quiz, QuizSubmissionResponse } from '@/types/api';
 
 /**
  * Base HTTP client class for making API requests
@@ -354,14 +354,24 @@ export class QuizAPI extends BaseAPIClient {
      * Get list of all quizzes
      */
     async getQuizzes(page: number = 1): Promise<QuizzesListResponse> {
-        return this.get<QuizzesListResponse>(`/quizzes/?page=${page}`);
+        return this.get<QuizzesListResponse>(`/quiz/?page=${page}`);
     }
 
     /**
      * Get a specific quiz by ID
      */
     async getQuiz(quizId: number): Promise<Quiz> {
-        return this.get<Quiz>(`/quizzes/${quizId}/`);
+        return this.get<Quiz>(`/quiz/${quizId}/`);
+    }
+
+    async submitQuiz(quizId: number, data: { answers: { question_id: number; user_answer: string }[] }): Promise<QuizSubmissionResponse> {
+        const response = await this.post<QuizSubmissionResponse>(`/quiz/${quizId}/submit/`, data);
+
+        if (!response || !response.results) {
+            throw new Error('Invalid response format from server');
+        }
+
+        return response;
     }
 }
 
