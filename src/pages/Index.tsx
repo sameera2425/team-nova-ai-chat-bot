@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Home, FileText, PenTool, Video, Map, Calendar, Clipboard, Send, Plus, Target, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRAGStream } from '@/lib/stream';
@@ -9,6 +9,8 @@ const Index = () => {
   const [inputValue, setInputValue] = useState('');
   const navigate = useNavigate();
   const profileAvatar = 'https://api.dicebear.com/7.x/thumbs/svg?seed=Jane';
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Previous chats logic
   const [previousChats, setPreviousChats] = useState(() => {
@@ -182,13 +184,54 @@ const Index = () => {
               <div className="bg-white rounded-2xl p-5">
                 {/* Main Input Text */}
                 <div className="flex items-center gap-4 mb-4">
-                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200" aria-label="Add">
+                  <button
+                    className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                    aria-label="Add"
+                    type="button"
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  >
                     <Plus className="w-5 h-5" />
                   </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"
+                    title="Upload a file or image"
+                    placeholder="Upload a file or image"
+                    onChange={e => {
+                      if (e.target.files && e.target.files[0]) setUploadedFile(e.target.files[0]);
+                    }}
+                  />
+                  {uploadedFile && (
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1">
+                      {uploadedFile.type.startsWith('image') ? (
+                        <img src={URL.createObjectURL(uploadedFile)} alt="preview" className="w-8 h-8 object-cover rounded" />
+                      ) : (
+                        <span className="text-sm text-gray-700 max-w-[120px] truncate">{uploadedFile.name}</span>
+                      )}
+                      <button
+                        className="ml-1 text-gray-400 hover:text-red-500"
+                        onClick={() => setUploadedFile(null)}
+                        aria-label="Remove file"
+                        type="button"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        if (/^quiz(ze)?$/i.test(inputValue.trim())) {
+                          setInputValue('');
+                          navigate('/quiz');
+                        }
+                      }
+                    }}
                     placeholder="Ask me anything — videos, quizzes, mindmaps or your doubts!"
                     className="flex-1 text-lg placeholder-gray-400 focus:outline-none bg-transparent"
                   />

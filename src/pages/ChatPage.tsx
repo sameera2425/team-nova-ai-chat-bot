@@ -451,7 +451,7 @@ const ChatPage = () => {
           </div>
         )}
         {/* New Chat & Set Goals */}
-        {sidebarContentVisible && (
+        {sidebarContentVisible ? (
           <>
             <button
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
@@ -470,6 +470,25 @@ const ChatPage = () => {
             >
               <Target className="w-5 h-5" />
               <span>Set Goals</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="w-full flex items-center justify-center px-0 py-3 rounded-xl mb-2 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/')}
+              aria-label="New Chat"
+              type="button"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
+            <button
+              className="w-full flex items-center justify-center px-0 py-3 rounded-xl mb-4 transition-all duration-200 text-blue-700 hover:bg-blue-100"
+              onClick={() => navigate('/set-goal')}
+              aria-label="Set Goals"
+              type="button"
+            >
+              <Target className="w-5 h-5" />
             </button>
           </>
         )}
